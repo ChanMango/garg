@@ -1,4 +1,4 @@
-package arg
+package garg
 
 func Greater(expect, obtain interface{}) {
 

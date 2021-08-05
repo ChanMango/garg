@@ -1,4 +1,4 @@
-package check
+package garg
 
 //
 type Result map[string]string
