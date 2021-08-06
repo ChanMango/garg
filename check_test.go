@@ -15,7 +15,7 @@ func Test(t *testing.T) {
 type Student struct {
 	ID       int64  `json:"id"`
 	Name     string `json:"name,omitempty"`
-	Age      int    `json:"age,omitempty" arg:">20 & <100"`
+	Age      int    `json:"age,omitempty" arg:">20 & <= 29"`
 	AtScholl bool   `json:"at_scholl,omitempty" arg:"=true"`
 }
 
