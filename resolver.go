@@ -26,7 +26,7 @@ func NewStructDescribe() *StructDescribe {
 
 type DefaultResolver struct {
 	StructName string
-	ObjValue   reflect.Value
+	Value  reflect.Value
 }
 
 //只能使用此方法进行初始化
@@ -57,7 +57,7 @@ func NewDefaultResolver(target interface{}) *DefaultResolver {
 		}
 		defaultStructDescribe[tp.Name()] = describe
 	}
-	return &DefaultResolver{StructName: stuctName, ObjValue: tv}
+	return &DefaultResolver{StructName: stuctName, Value: tv}
 }
 
 func (rvr DefaultResolver) parseStructure(tp reflect.Type) {
@@ -70,8 +70,16 @@ func (rvr DefaultResolver) verify() (pass bool, rt Result) {
 	describe := defaultStructDescribe[rvr.StructName]
 	for _, field := range describe.needVerifyTagField {
 		tags := describe.fieldTagMap[field].Get(common.VERIFY_LABEL)
-		println(tags)
-		rule.Parse(tags).Cal()
+		express, err := rule.Parse(tags)
+		if err != nil {
+			rt.Add(field, err)
+			pass = false
+			continue
+		}
+		pass, err = express.Cal(rvr.Value.FieldByName(field).Interface())
+		if err != nil {
+			rt.Add(field, err)
+		}
 	}
-
+	return pass, rt
 }

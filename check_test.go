@@ -1,20 +1,22 @@
 package garg
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
 
 func Test(t *testing.T) {
-	student := NewStudent("yung", 29, false)
-	Check(student)
+	student := NewStudent("yung", 29, true)
+	check, result := Check(student)
+	fmt.Println(check, result)
 }
 
 type Student struct {
 	ID       int64  `json:"id"`
-	Name     string `json:"name,omitempty" arg:"required"`
-	Age      int    `json:"age,omitempty" arg:">20"`
-	AtScholl bool   `json:"at_scholl,omitempty" arg:"=ture"`
+	Name     string `json:"name,omitempty"`
+	Age      int    `json:"age,omitempty" arg:">20 & <100"`
+	AtScholl bool   `json:"at_scholl,omitempty" arg:"=true"`
 }
 
 func NewStudent(name string, age int, atScholl bool) *Student {

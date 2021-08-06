@@ -3,13 +3,13 @@ package rule
 import (
 	"errors"
 	"fmt"
-	"git.xiaojukeji.com/chenyeung/garg/check"
 	"reflect"
+	"strconv"
 )
 
 //处理 in 或者not in
 type Express interface {
-	Cal() (bool, error)
+	Cal(actualVal interface{}) (bool, error)
 }
 
 type CollectionExpression struct {
@@ -17,26 +17,36 @@ type CollectionExpression struct {
 	elems []interface{}
 }
 
-func (c CollectionExpression) Cal(target interface{}) (pass bool) {
+func NewCollectionExpression() *CollectionExpression {
+	return &CollectionExpression{}
+}
+
+func (c CollectionExpression) Cal(actualVal interface{}) (pass bool, err error) {
 	switch c.op {
 	case IN_OperatorType:
 		pass = false
 		for _, ele := range c.elems {
-			if ele == target {
+			if ele == actualVal {
 				pass = true
 				break
 			}
 		}
+		if !pass {
+			err = errors.New(fmt.Sprintf("expect %v in %v,but it's not contains", actualVal, c.elems))
+		}
 	case NI_OperatorType:
 		pass = true
 		for _, ele := range c.elems {
-			if ele == target {
+			if ele == actualVal {
 				pass = false
 				break
 			}
 		}
+		if !pass {
+			err = errors.New(fmt.Sprintf("expect %v not in %v,but it's in", actualVal, c.elems))
+		}
 	}
-	return pass
+	return pass, err
 }
 
 type CalBucket struct {
@@ -44,18 +54,22 @@ type CalBucket struct {
 	orBucket  []Express
 }
 
-func (c CalBucket) Cal() (pass bool, err error) {
+func NewCalBucket() *CalBucket {
+	return &CalBucket{}
+}
+
+func (c CalBucket) Cal(actualVal interface{}) (pass bool, err error) {
 	//result := garg.NewResult()
 	//处理 &桶中express
 	for _, exp := range c.andBucket {
-		if pass, err := exp.Cal(); !pass {
+		if pass, err := exp.Cal(actualVal); !pass {
 			//result.Add(common.And_OPErrKey, err)
 			return false, err
 		}
 	}
 	//处理 ｜｜桶中的express
 	for _, exp := range c.andBucket {
-		if pass, err = exp.Cal(); pass {
+		if pass, err = exp.Cal(actualVal); pass {
 			return true, nil
 		}
 	}
@@ -69,115 +83,195 @@ type NormalExpression struct {
 	expected interface{}
 }
 
+func NewNormalExpression() *NormalExpression {
+	return &NormalExpression{}
+}
+
 func (n NormalExpression) Cal(actual interface{}) (pass bool, err error) {
-	etp := reflect.TypeOf(n.expected)
 	atp := reflect.TypeOf(actual)
-	ev := reflect.ValueOf(n.expected)
 	av := reflect.ValueOf(actual)
-	sameType, err := check.IsSameType(etp, atp)
-	if !sameType {
-		return false, err
-	}
 	switch n.Op {
 	case GE_OperatorType:
-		switch etp.Kind() {
+		switch atp.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			pass = av.Int() >= ev.Int()
+			ev, err := strconv.ParseInt(n.expected.(string), 10, 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Int() >= ev
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			pass = av.Int() >= ev.Int()
+			ev, err := strconv.ParseInt(n.expected.(string), 10, 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Int() >= ev
 		case reflect.Float32, reflect.Float64:
-			pass = av.Float() >= ev.Float()
+			ev, err := strconv.ParseFloat(n.expected.(string), 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Float() >= ev
 		case reflect.String:
-			pass = av.String() >= ev.String()
+			ev, ok := n.expected.(string)
+			if !ok {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.String() >= ev
 		default:
 			pass = false
-			err = errors.New("不支持逻辑运算类型，op=" + n.Op.String())
-		}
-	case NE_OperatorType:
-		switch etp.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			pass = ev.Int() != av.Int()
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			pass = ev.Uint() != av.Uint()
-		case reflect.Float32, reflect.Float64:
-			pass = ev.Float() != av.Float()
-		case reflect.Complex64, reflect.Complex128:
-			pass = ev.Complex() != av.Complex()
-		case reflect.String:
-			pass = ev.String() != av.String()
-		case reflect.Bool:
-			pass = ev.Bool() != av.Bool()
-		default:
-			pass = false
-			err = errors.New("不支持逻辑运算类型，op=" + n.Op.String())
+			err = errors.New("不支持逻辑运算类型，op=" + OperateType2String(n.Op))
 		}
 	case GT_OperatorType:
-		switch etp.Kind() {
+		switch atp.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			pass = av.Int() > ev.Int()
+			ev, err := strconv.ParseInt(n.expected.(string), 10, 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Int() > ev
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			pass = av.Int() > ev.Int()
+			ev, err := strconv.ParseInt(n.expected.(string), 10, 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Int() > ev
 		case reflect.Float32, reflect.Float64:
-			pass = av.Float() > ev.Float()
+			ev, err := strconv.ParseFloat(n.expected.(string), 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Float() > ev
 		case reflect.String:
-			pass = av.String() > ev.String()
+			ev, ok := n.expected.(string)
+			if !ok {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.String() > ev
 		default:
 			pass = false
-			err = errors.New("不支持逻辑运算类型，op=" + n.Op.String())
+			err = errors.New("不支持逻辑运算类型，op=" + OperateType2String(n.Op))
 		}
 	case LT_OperatorType:
-		switch etp.Kind() {
+		switch atp.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			pass = av.Int() < ev.Int()
+			ev, err := strconv.ParseInt(n.expected.(string), 10, 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Int() < ev
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			pass = av.Int() < ev.Int()
+			ev, err := strconv.ParseInt(n.expected.(string), 10, 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Int() < ev
 		case reflect.Float32, reflect.Float64:
-			pass = av.Float() < ev.Float()
+			ev, err := strconv.ParseFloat(n.expected.(string), 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Float() < ev
 		case reflect.String:
-			pass = av.String() < ev.String()
+			ev, ok := n.expected.(string)
+			if !ok {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.String() > ev
 		default:
 			pass = false
-			err = errors.New("不支持逻辑运算类型，op=" + n.Op.String())
+			err = errors.New("不支持逻辑运算类型，op=" + OperateType2String(n.Op))
 		}
 	case EQ_OperatorType:
-		switch etp.Kind() {
+		switch atp.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			pass = ev.Int() == av.Int()
+			ev, err := strconv.ParseInt(n.expected.(string), 10, 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Int() == ev
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			pass = ev.Uint() == av.Uint()
+			ev, err := strconv.ParseUint(n.expected.(string), 10, 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Uint() == ev
 		case reflect.Float32, reflect.Float64:
-			pass = ev.Float() == av.Float()
-		case reflect.Complex64, reflect.Complex128:
-			pass = ev.Complex() == av.Complex()
+			ev, err := strconv.ParseFloat(n.expected.(string), 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Float() == ev
 		case reflect.String:
-			pass = ev.String() == av.String()
+			ev, ok := n.expected.(string)
+			if !ok {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.String() == ev
 		case reflect.Bool:
-			pass = ev.Bool() == av.Bool()
+			ev, err := strconv.ParseBool(n.expected.(string))
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Bool() == ev
 		default:
 			pass = false
-			err = errors.New("不支持逻辑运算类型，op=" + n.Op.String())
+			err = errors.New("不支持逻辑运算类型，op=" + OperateType2String(n.Op))
 		}
 
 	case LE_OperatorType:
-		switch etp.Kind() {
+		switch atp.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			pass = av.Int() <= ev.Int()
+			ev, err := strconv.ParseInt(n.expected.(string), 10, 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Int() <= ev
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			pass = av.Int() <= ev.Int()
+			ev, err := strconv.ParseInt(n.expected.(string), 10, 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Int() <= ev
 		case reflect.Float32, reflect.Float64:
-			pass = av.Float() <= ev.Float()
+			ev, err := strconv.ParseFloat(n.expected.(string), 64)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.Float() <= ev
 		case reflect.String:
-			pass = av.String() <= ev.String()
+			ev, ok := n.expected.(string)
+			if !ok {
+				err = errors.New(fmt.Sprintf("类型转换错误, rule中的类型 与 实际字段值类型不一致"))
+				break
+			}
+			pass = av.String() <= ev
 		default:
 			pass = false
-			err = errors.New("不支持逻辑运算类型，op=" + n.Op.String())
+			err = errors.New("不支持逻辑运算类型，op=" + OperateType2String(n.Op))
 		}
-	default:
-		pass = false
-		err = errors.New("不支持逻辑运算类型，op=" + n.Op.String())
 	}
 	if !pass && err == nil {
-		err = errors.New(fmt.Sprintf("expect= %v bug act= %v,while the op=%v", n.expected, actual, n.Op.String()))
+		err = errors.New(fmt.Sprintf("expect=%v, but act=%v, while the op is [%v]", n.expected, actual, OperateType2String(n.Op)))
 	}
 	return pass, err
 }

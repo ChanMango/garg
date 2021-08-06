@@ -12,12 +12,12 @@ func Check(val interface{}) (bool, Result) {
 	r := NewResult()
 	isStruct, err := check.IsStruct(val)
 	if !isStruct {
-		r.Add("type", NewArgError(err))
+		r.Add("type", err)
 		return false, r
 	}
 	//执行参数检查
-	NewDefaultResolver(val).verify()
-	return true, nil
+	pass, result := NewDefaultResolver(val).verify()
+	return pass, result
 }
 
 type CheckerFunc = func(val interface{}) bool
