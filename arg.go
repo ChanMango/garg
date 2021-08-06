@@ -1,14 +1,27 @@
 package garg
 
-func Greater(expect, obtain interface{}) {
+import (
+	"git.xiaojukeji.com/chenyeung/garg/check"
+)
 
+type CheckIfc interface {
+	Check(cf CheckerFunc) (bool, Result)
 }
-func Lesser(expect, obtain interface{}) {
 
+func Check(val interface{}) (bool, Result) {
+	r := NewResult()
+	isStruct, err := check.IsStruct(val)
+	if !isStruct {
+		r.Add("type", NewArgError(err))
+		return false, r
+	}
+	//执行参数检查
+	NewDefaultResolver(val).verify()
+	return true, nil
 }
-func Equal(expect, obtain interface{}) {
 
-}
-func Required(field string,expect interface{},result map[string]string)  {
+type CheckerFunc = func(val interface{}) bool
 
+func CustomChecker(value interface{}, ckFun CheckerFunc) bool {
+	return ckFun(value)
 }
