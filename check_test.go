@@ -8,8 +8,14 @@ import (
 
 func Test(t *testing.T) {
 	student := NewStudent("yung", 29, true)
-	check, result := Check(student)
-	fmt.Println(check, result)
+	//newStu := NewStudent("kang", 10, true)
+	m := make(map[string]string)
+	m["name"] = "textName"
+	m["age"] = "30"
+	CompareAndUpdate(m, student)
+	fmt.Println("old student", student)
+	//check, result := CheckByTag(student)
+	//fmt.Println(check, result)
 }
 
 type Student struct {
