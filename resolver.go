@@ -26,7 +26,7 @@ func NewStructDescribe() *StructDescribe {
 
 type DefaultResolver struct {
 	StructName string
-	Value  reflect.Value
+	Value      reflect.Value
 }
 
 //只能使用此方法进行初始化
@@ -66,6 +66,7 @@ func (rvr DefaultResolver) parseStructure(tp reflect.Type) {
 
 func (rvr DefaultResolver) verify() (pass bool, rt Result) {
 	rt = NewResult()
+	pass = true
 	//一定存在
 	describe := defaultStructDescribe[rvr.StructName]
 	for _, field := range describe.needVerifyTagField {
