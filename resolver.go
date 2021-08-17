@@ -1,6 +1,10 @@
 package garg
 
 import (
+	"crypto/md5"
+	"errors"
+	"fmt"
+	"git.xiaojukeji.com/chenyeung/garg/check"
 	"git.xiaojukeji.com/chenyeung/garg/common"
 	"git.xiaojukeji.com/chenyeung/garg/rule"
 	"reflect"
@@ -24,24 +28,30 @@ func NewStructDescribe() *StructDescribe {
 	return &StructDescribe{fieldTypeMap: fieldTypeMap, fieldNameMap: fieldNameMap, fieldTagMap: fieldTagMap, needVerifyTagField: needVerifyTag}
 }
 
-type DefaultResolver struct {
+type defaultResolver struct {
 	StructName string
-	Value      reflect.Value
+	TargetV    reflect.Value
+	ErrResult  Result
 }
 
 //只能使用此方法进行初始化
 
-func NewDefaultResolver(target interface{}) *DefaultResolver {
-	tp := reflect.TypeOf(target)
-	tv := reflect.ValueOf(target)
-	if tp.Kind() != reflect.Struct {
-		//之前已经确认是是struct或者struct pointer类型, 所以这里一定是pointer类型
-		tp = reflect.TypeOf(target).Elem()
-		tv = reflect.ValueOf(target).Elem()
+func genStrutNameKey(val interface{}) string {
+	tp := reflect.TypeOf(val)
+	name := tp.Name()
+	if name == "" {
+		name = "anonym_struct"
+		md5Val := fmt.Sprintf("%x", md5.Sum([]byte(tp.String()))) //为什么要用md5  因为 匿名struct的名字特别长且有特殊符号导致map取不到对应的key
+		return name + md5Val
 	}
+	return name
+}
+func NewDefaultResolver(val interface{}) *defaultResolver {
+	structName := genStrutNameKey(val)
+	tp := reflect.TypeOf(val).Elem()
+	tp, tv := check.TypeAndValue(val)
 	//是否已经存在结构信息，不存在才解析
-	stuctName := tp.Name()
-	_, ok := defaultStructDescribe[stuctName]
+	_, ok := defaultStructDescribe[structName]
 	if !ok {
 		describe := NewStructDescribe()
 		for i := 0; i < tp.NumField(); i++ {
@@ -55,32 +65,36 @@ func NewDefaultResolver(target interface{}) *DefaultResolver {
 				describe.needVerifyTagField = append(describe.needVerifyTagField, fieldName)
 			}
 		}
-		defaultStructDescribe[tp.Name()] = describe
+		defaultStructDescribe[structName] = describe
 	}
-	return &DefaultResolver{StructName: stuctName, Value: tv}
+	return &defaultResolver{StructName: structName, TargetV: tv, ErrResult: NewResult()}
 }
 
-func (rvr DefaultResolver) parseStructure(tp reflect.Type) {
+func (resover defaultResolver) parseStructure(tp reflect.Type) {
 
 }
 
-func (rvr DefaultResolver) verify() (pass bool, rt Result) {
-	rt = NewResult()
-	pass = true
+func (resover defaultResolver) verify() (bool, Result) {
+	pass := true
 	//一定存在
-	describe := defaultStructDescribe[rvr.StructName]
+	describe, ok := defaultStructDescribe[resover.StructName]
+	if !ok {
+		resover.ErrResult.Add(resover.StructName, "internal", errors.New("can not get have describe for sturct"))
+		return false, resover.ErrResult
+	}
 	for _, field := range describe.needVerifyTagField {
 		tags := describe.fieldTagMap[field].Get(common.VERIFY_LABEL)
-		express, err := rule.Parse(tags)
+		express, err := rule.NewParser(resover.TargetV, tags).Parse()
 		if err != nil {
-			rt.Add(field, err)
+			resover.ErrResult.Add(resover.StructName, field, err)
 			pass = false
 			continue
 		}
-		pass, err = express.Cal(rvr.Value.FieldByName(field).Interface())
+		_, err = express.Cal(resover.TargetV.FieldByName(field).Interface())
 		if err != nil {
-			rt.Add(field, err)
+			pass = false
+			resover.ErrResult.Add(resover.StructName, field, err)
 		}
 	}
-	return pass, rt
+	return pass, resover.ErrResult
 }

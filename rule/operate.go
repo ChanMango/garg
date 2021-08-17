@@ -1,11 +1,12 @@
 package rule
 
+import "fmt"
+
 type OperatorType int
 type RelationType int
 
 var (
-	//not !
-	NOT_OperatorType OperatorType = -7
+	Illegal_OperatorType OperatorType = -1
 	//!= NE <>
 	NE_OperatorType OperatorType = 3 //("not"+"="-> -7+10=0)
 	//=
@@ -18,12 +19,14 @@ var (
 	LE_OperatorType OperatorType = 11
 	//>=
 	GE_OperatorType OperatorType = 12
-	//need
+	//need  not init value ep: var x =3   -> x is not initial value 0, so this expression can be return true
 	NEED_OperatorType OperatorType = 13
-	//in
+	//in collection elems
 	IN_OperatorType OperatorType = 14
+	//not in collection elems
 	NI_OperatorType OperatorType = 7
 )
+
 var (
 	//运算关系提起
 	And_RelationType OperatorType = 0
@@ -49,7 +52,12 @@ func OperateType2String(op OperatorType) string {
 		msg = "not in"
 	case IN_OperatorType:
 		msg = "in"
+	case NEED_OperatorType:
+		msg = "required"
+	default:
+		msg = fmt.Sprintf("Unsupport OperateType %v", op)
 	}
+
 	return msg
 }
 func String2OperateType(op string) (tp OperatorType) {
@@ -59,7 +67,7 @@ func String2OperateType(op string) (tp OperatorType) {
 	case ">=":
 		tp = GE_OperatorType
 	case "!=":
-		tp = NEED_OperatorType
+		tp = NE_OperatorType
 	case "=":
 		tp = EQ_OperatorType
 	case "<":
@@ -70,6 +78,11 @@ func String2OperateType(op string) (tp OperatorType) {
 		tp = NI_OperatorType
 	case "in":
 		tp = IN_OperatorType
+	case "required", "not null":
+		tp = NEED_OperatorType
+	default:
+		tp = Illegal_OperatorType
 	}
+
 	return
 }

@@ -3,8 +3,7 @@ package rule
 import (
 	"errors"
 	"fmt"
-	"reflect"
-	"strconv"
+	"git.xiaojukeji.com/chenyeung/garg/check"
 )
 
 //处理 in 或者not in
@@ -87,7 +86,7 @@ func NewNormalExpression() *NormalExpression {
 	return &NormalExpression{}
 }
 
-func (n NormalExpression) Cal(actual interface{}) (pass bool, err error) {
+/*func (n NormalExpression) Cal(actual interface{}) (pass bool, err error) {
 	atp := reflect.TypeOf(actual)
 	av := reflect.ValueOf(actual)
 	switch n.Op {
@@ -269,9 +268,37 @@ func (n NormalExpression) Cal(actual interface{}) (pass bool, err error) {
 			pass = false
 			err = errors.New("不支持逻辑运算类型，op=" + OperateType2String(n.Op))
 		}
+	default:
+		pass = false
+		err = errors.New("暂不支持该操作符，或rule配置错误")
 	}
 	if !pass && err == nil {
-		err = errors.New(fmt.Sprintf("expect=%v, but act=%v, while the op is [%v]", n.expected, actual, OperateType2String(n.Op)))
+		err = errors.New(fmt.Sprintf("expect %v %v, but act=%v, while the op is [%v]", OperateType2String(n.Op), n.expected, actual, OperateType2String(n.Op)))
 	}
 	return pass, err
+}*/
+func (n NormalExpression) Cal(actual interface{}) (pass bool, err error) {
+	switch n.Op {
+	case LE_OperatorType:
+		return check.LE(actual, n.expected)
+	case GE_OperatorType:
+		return check.LE(actual, n.expected)
+	case NE_OperatorType:
+		return check.E(actual, n.expected)
+	case EQ_OperatorType:
+		return check.LE(actual, n.expected)
+	case LT_OperatorType:
+		return check.LE(actual, n.expected)
+	case GT_OperatorType:
+		return check.LE(actual, n.expected)
+	case IN_OperatorType:
+		return check.Contains(actual, n.expected)
+	case NI_OperatorType:
+		return check.Contains(actual, n.expected)
+	case NEED_OperatorType:
+		return check.Required(actual)
+	default:
+		err = errors.New(OperateType2String(Illegal_OperatorType))
+	}
+	return false, err
 }

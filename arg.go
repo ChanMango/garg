@@ -15,16 +15,25 @@ type CheckIfc interface {
 }
 
 //根据stuct tag上定义的规则，校验字段内容
-func CheckByTag(val interface{}) (bool, Result) {
+func CheckByTag(vals ...interface{}) (bool, error) {
 	r := NewResult()
-	isStruct, err := check.IsStruct(val)
-	if !isStruct {
-		r.Add("type", err)
-		return false, r
+	for i := range vals {
+		//执行参数检查
+		isStruct := check.IsStruct(vals[i])
+		if !isStruct {
+			r.Add("nil", "arg_type_err", errors.New(fmt.Sprintf("type of arg index %v shou be struct", i)))
+			continue
+		}
+		pass, result := NewDefaultResolver(vals[i]).verify()
+		if !pass {
+			r.AddAll(result)
+		}
 	}
-	//执行参数检查
-	pass, result := NewDefaultResolver(val).verify()
-	return pass, result
+	if len(r) > 0 {
+		return false, r.CollectToError()
+	}
+	return true, nil
+
 }
 
 //根据map里边制定字段对应的rule， 进行stuct 字段的参数校验
@@ -46,7 +55,7 @@ func CompareAndUpdate(patchMap map[string]string, toUpdate interface{}) error {
 	if vpp.Kind() == reflect.Ptr {
 		vpp = vpp.Elem()
 	}
-	if vpp.Kind() != reflect.Map  {
+	if vpp.Kind() != reflect.Map {
 		return errors.New("数据更新patch 仅支持map 或mapPtr")
 	} else {
 
@@ -59,7 +68,7 @@ func CompareAndUpdate(patchMap map[string]string, toUpdate interface{}) error {
 		return errors.New("<nil pointer>")
 	}
 	if !vpo.IsValid() {
-		return errors.New("<zero Value>")
+		return errors.New("<zero targetVP>")
 	}
 	////数据更新处理
 	for field, patchVal := range patchMap {

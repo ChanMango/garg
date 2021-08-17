@@ -1,13 +1,12 @@
 package garg
 
 import (
+	"encoding/json"
 	"errors"
-	"fmt"
-	"strings"
 )
 
 //  返回参数检查错误字段的err信息
-type Result map[string]error
+type Result map[string]map[string]string
 
 //type ArgError struct {
 //	error []error
@@ -25,13 +24,23 @@ func NewResult() Result {
 }
 
 //为field 添加err记录
-func (r Result) Add(msg string, err error) {
-	r[msg] = err
+func (r Result) Add(structureName, msg string, err error) {
+	_, ok := r[structureName]
+	if !ok {
+		r[structureName] = map[string]string{}
+	}
+	r[structureName][msg] = err.Error()
 }
 func (r Result) CollectToError() error {
-	sb := strings.Builder{}
-	for k, v := range r {
-		sb.WriteString(fmt.Sprintf("%v=>%v\n", k, v))
+	byts, _ := json.Marshal(r)
+	text := string(byts)
+	return errors.New(text)
+}
+func (r Result) AddAll(others ...Result) {
+	for i := range others {
+		other := others[i]
+		for s := range other {
+			r[s] = other[s]
+		}
 	}
-	return errors.New(sb.String())
 }
