@@ -1,6 +1,7 @@
 package garg
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 )
@@ -32,9 +33,11 @@ func (r Result) Add(structureName, msg string, err error) {
 	r[structureName][msg] = err.Error()
 }
 func (r Result) CollectToError() error {
-	byts, _ := json.Marshal(r)
-	text := string(byts)
-	return errors.New(text)
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.Encode(r)
+	return errors.New(buffer.String())
 }
 func (r Result) AddAll(others ...Result) {
 	for i := range others {

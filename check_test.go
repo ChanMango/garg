@@ -81,8 +81,8 @@ func TestCheckRule(t *testing.T) {
 	var data = struct {
 		Id          uint64    `json:"id" db:"id"`
 		TaskId      uint64    `json:"task_id" db:"task_id"`
-		CityId      uint64    `json:"city_id" db:"city_id"`
-		Phone       string    `json:"phone" db:"phone"`
+		CityId      uint64    `json:"city_id" db:"city_id" arg:"in (52140500,81270100)"`
+		Phone       string    `json:"phone" db:"phone" arg:"required"`
 		CountryCode string    `json:"country_code" db:"country_code"`
 		QueryWord   string    `json:"query_word" db:"query_word"`
 		Lat         float64   `json:"lat" db:"lat" arg:">=-90 and <=90"`
@@ -91,11 +91,12 @@ func TestCheckRule(t *testing.T) {
 		Comment     string    `json:"comment" db:"comment"`
 	}{}
 
-	data.Lat = 113.4
+	data.Lat = 13.4
 	data.Lng = 32.33444
 	data.Phone = "12344345"
 	data.CountryCode = "MX"
 	data.QueryWord = "kfc"
+	data.CityId = 52140500
 	start := time.Now().Nanosecond()
 	pass, result := CheckByTag(&data)
 	end := time.Now().Nanosecond()

@@ -13,8 +13,8 @@ var (
 	In_OP_Match              RuleCompile = "\\bin\\b"
 	NotIn_OP_Match           RuleCompile = "(\\bnot\\b|!)\\s*(in)"
 	NormalExpress_Match      RuleCompile = "(>=)|(<=)|<|>|=|(!=)"
-	CollectElemExpress_Match RuleCompile = "(?:(?![(\\bin\\b)|(\\bnot\\s*\\bin\\b)]))\\w+" //专用于in ｜not in 获取元素
-	Required_OP_Match        RuleCompile = "^(required)+(?![^(required)])|^(not\\s*null)+(?![^(not\\s%null)])"
+	CollectElemExpress_Match RuleCompile = "\\b\\w+\\b" //专用于in ｜not in 获取元素
+	Required_OP_Match        RuleCompile = "(\\brequired\\b)|(\\bnot\\s*\\bnull\\b)"
 	//err express
 	Err_Require_Match        RuleCompile = "[&|\\||>|<|=]+.*(required)+" //required 只能单独存在
 	Err_IlegelExpress_Mahtch RuleCompile = "(<!+)|(>!+)|(><)|(=<)|(=>)|(!<)|(!>)|(=!)|(<{2,})|(>{2,})|(={3,})+"

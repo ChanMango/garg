@@ -8,13 +8,13 @@ import (
 	"strings"
 )
 
-type CompareType int
+type CompareType string
 
 const (
-	compareLess CompareType = iota - 1
-	compareEqual
-	compareGreater
-	compareError CompareType = 100
+	compareLess    CompareType = "<"
+	compareEqual   CompareType = "="
+	compareGreater CompareType = ">"
+	compareError   CompareType = "UnSupport"
 )
 
 var (

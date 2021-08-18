@@ -68,13 +68,13 @@ func internalParse(rule string, of reflect.Type) (Express, error) {
 	//集合表达式
 	inCmp, _ := regexp.Compile(string(In_OP_Match))
 	notInCmp, _ := regexp.Compile(string(NotIn_OP_Match))
-	eleCmp, _ := regexp.Compile(string(CollectElemExpress_Match))
+	eleCmp, err := regexp.Compile(string(CollectElemExpress_Match))
 	hasIn := inCmp.MatchString(rule)
 	hasNotIi := notInCmp.MatchString(rule)
 	collExpression := NewCollectionExpression()
-	if hasIn {
-		collExpression.op = IN_OperatorType
-		eles := eleCmp.FindStringSubmatch(rule)
+	if hasNotIi {
+		collExpression.op = NI_OperatorType
+		eles := eleCmp.FindAllString(notInCmp.ReplaceAllString(rule, ""), -1)
 		container, err := check.CreateContainer(eles, of)
 		if err != nil {
 			return nil, err
@@ -82,9 +82,9 @@ func internalParse(rule string, of reflect.Type) (Express, error) {
 		collExpression.elems = container
 		return collExpression, nil
 	}
-	if hasNotIi {
-		collExpression.op = NI_OperatorType
-		eles := eleCmp.FindStringSubmatch(rule)
+	if hasIn {
+		collExpression.op = IN_OperatorType
+		eles := eleCmp.FindAllString(inCmp.ReplaceAllString(rule, ""), -1)
 		container, err := check.CreateContainer(eles, of)
 		if err != nil {
 			return nil, err
@@ -108,11 +108,12 @@ func internalParse(rule string, of reflect.Type) (Express, error) {
 		return expression, nil
 	}
 	//required 表达式
-	rcp, _ := regexp.Compile(string(Required_OP_Match))
+	rcp, err := regexp.Compile(string(Required_OP_Match))
+	_ = err
 	hasNeed := rcp.MatchString(rule)
 	if hasNeed {
 		expression := NewNormalExpression()
-		opStr := ncp.FindString(rule)
+		opStr := rcp.FindString(rule)
 		operateType := String2OperateType(opStr)
 		expression.Op = operateType
 		//required 不需要 期望值，只需要判断实际值是否是默认值

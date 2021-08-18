@@ -59,7 +59,7 @@ func toSetType(val string, atp reflect.Type) (interface{}, error) {
 	case reflect.Uint:
 		x, errx := strconv.ParseUint(val, 10, 64)
 		err = errx
-		ev = uint64(x)
+		ev = uint(x)
 	case reflect.Uint8:
 		x, errx := strconv.ParseUint(val, 10, 8)
 		err = errx
@@ -75,7 +75,7 @@ func toSetType(val string, atp reflect.Type) (interface{}, error) {
 	case reflect.Uint64:
 		x, errx := strconv.ParseUint(val, 10, 64)
 		err = errx
-		ev = x
+		ev = uint64(x)
 	case reflect.Uintptr:
 		x, errx := strconv.ParseUint(val, 10, 64)
 		err = errx
@@ -110,7 +110,7 @@ func GE(obtain, expect interface{}) (bool, error) {
 			newExp = setType
 		}
 	}
-	pass, err := compareTwoValues(obtain, newExp, []CompareType{compareEqual, compareGreater})
+	pass, err := compareTwoValues(obtain, newExp, []CompareType{compareGreater,compareEqual})
 	return pass, err
 }
 func LE(obtain, expect interface{}) (bool, error) {
@@ -126,7 +126,7 @@ func LE(obtain, expect interface{}) (bool, error) {
 		}
 
 	}
-	pass, err := compareTwoValues(obtain, newExp, []CompareType{compareEqual, compareLess})
+	pass, err := compareTwoValues(obtain, newExp, []CompareType{compareLess,compareEqual})
 	return pass, err
 }
 func GT(obtain, expect interface{}) (bool, error) {
