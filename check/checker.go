@@ -3,6 +3,7 @@ package check
 import (
 	"errors"
 	"fmt"
+	"git.xiaojukeji.com/chenyeung/garg/common"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -278,183 +279,197 @@ func IsString(target interface{}) bool {
 
 //暂时仅支持切片类型
 func CreateContainer(eles []string, of reflect.Type) ([]interface{}, error) {
-	tof := of
-	var isPtr = of.Kind() == reflect.Ptr
-	if isPtr {
-		tof = of.Elem()
-	}
-	res := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), 0, len(eles))
-	for i := range eles {
-		var toSet reflect.Value
-		switch tof.Kind() {
-		case reflect.Int8:
-			v, err := strconv.ParseInt(eles[i], 10, 8)
-			if err != nil {
-				return nil, err
-			}
-			toSet = reflect.New(tof)
-			toSet.Elem().SetInt(v)
-		case reflect.Int16:
-			v, err := strconv.ParseInt(eles[i], 10, 16)
-			if err != nil {
-				return nil, err
-			}
-			toSet = reflect.New(tof)
-			toSet.Elem().SetInt(v)
-		case reflect.Int32:
-			v, err := strconv.ParseInt(eles[i], 10, 32)
-			if err != nil {
-				return nil, err
-			}
-			toSet = reflect.New(tof)
-			toSet.Elem().SetInt(v)
-		case reflect.Int64, reflect.Int:
-			v, err := strconv.ParseInt(eles[i], 10, 64)
-			if err != nil {
-				return nil, err
-			}
-			toSet = reflect.New(tof)
-			toSet.Elem().SetInt(v)
-		case reflect.Uint8:
-			v, err := strconv.ParseUint(eles[i], 10, 8)
-			if err != nil {
-				return nil, err
-			}
-			toSet = reflect.New(tof)
-			toSet.Elem().SetUint(v)
-		case reflect.Uint16:
-			v, err := strconv.ParseUint(eles[i], 10, 16)
-			if err != nil {
-				return nil, err
-			}
-			toSet = reflect.New(tof)
-			toSet.Elem().SetUint(v)
-		case reflect.Uint32:
-			v, err := strconv.ParseUint(eles[i], 10, 32)
-			if err != nil {
-				return nil, err
-			}
-			toSet = reflect.New(tof)
-			toSet.Elem().SetUint(v)
-		case reflect.Uint64, reflect.Uint:
-			v, err := strconv.ParseUint(eles[i], 10, 64)
-			if err != nil {
-				return nil, err
-			}
-			toSet = reflect.New(tof)
-			toSet.Elem().SetUint(v)
-		case reflect.Float64:
-			v, err := strconv.ParseFloat(eles[i], 64)
-			if err != nil {
-				return nil, err
-			}
-			toSet = reflect.New(tof)
-			toSet.Elem().SetFloat(v)
-		case reflect.Float32:
-			v, err := strconv.ParseFloat(eles[i], 32)
-			if err != nil {
-				return nil, err
-			}
-			toSet = reflect.New(tof)
-			toSet.Elem().SetFloat(v)
-		case reflect.String:
-			toSet = reflect.New(tof)
-			toSet.Elem().SetString(eles[i])
-		default:
-			//不支持的类型，跳过
-			continue
-		}
+	var rst []interface{}
 
+	err := common.PanicReportDecorator(func() error {
+
+		tof := of
+		var isPtr = of.Kind() == reflect.Ptr
 		if isPtr {
-			res = reflect.Append(res, toSet)
-		} else {
-			res = reflect.Append(res, toSet.Elem())
+			tof = of.Elem()
 		}
-	}
-	return res.Interface().([]interface{}), nil
+		res := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), 0, len(eles))
+		for i := range eles {
+			var toSet reflect.Value
+			switch tof.Kind() {
+			case reflect.Int8:
+				v, err := strconv.ParseInt(eles[i], 10, 8)
+				if err != nil {
+					return err
+				}
+				toSet = reflect.New(tof)
+				toSet.Elem().SetInt(v)
+			case reflect.Int16:
+				v, err := strconv.ParseInt(eles[i], 10, 16)
+				if err != nil {
+					return err
+				}
+				toSet = reflect.New(tof)
+				toSet.Elem().SetInt(v)
+			case reflect.Int32:
+				v, err := strconv.ParseInt(eles[i], 10, 32)
+				if err != nil {
+					return err
+				}
+				toSet = reflect.New(tof)
+				toSet.Elem().SetInt(v)
+			case reflect.Int64, reflect.Int:
+				v, err := strconv.ParseInt(eles[i], 10, 64)
+				if err != nil {
+					return err
+				}
+				toSet = reflect.New(tof)
+				toSet.Elem().SetInt(v)
+			case reflect.Uint8:
+				v, err := strconv.ParseUint(eles[i], 10, 8)
+				if err != nil {
+					return err
+				}
+				toSet = reflect.New(tof)
+				toSet.Elem().SetUint(v)
+			case reflect.Uint16:
+				v, err := strconv.ParseUint(eles[i], 10, 16)
+				if err != nil {
+					return err
+				}
+				toSet = reflect.New(tof)
+				toSet.Elem().SetUint(v)
+			case reflect.Uint32:
+				v, err := strconv.ParseUint(eles[i], 10, 32)
+				if err != nil {
+					return err
+				}
+				toSet = reflect.New(tof)
+				toSet.Elem().SetUint(v)
+			case reflect.Uint64, reflect.Uint:
+				v, err := strconv.ParseUint(eles[i], 10, 64)
+				if err != nil {
+					return err
+				}
+				toSet = reflect.New(tof)
+				toSet.Elem().SetUint(v)
+			case reflect.Float64:
+				v, err := strconv.ParseFloat(eles[i], 64)
+				if err != nil {
+					return err
+				}
+				toSet = reflect.New(tof)
+				toSet.Elem().SetFloat(v)
+			case reflect.Float32:
+				v, err := strconv.ParseFloat(eles[i], 32)
+				if err != nil {
+					return err
+				}
+				toSet = reflect.New(tof)
+				toSet.Elem().SetFloat(v)
+			case reflect.String:
+				toSet = reflect.New(tof)
+				toSet.Elem().SetString(eles[i])
+			default:
+				//不支持的类型，跳过
+				continue
+			}
+
+			if isPtr {
+				res = reflect.Append(res, toSet)
+			} else {
+				res = reflect.Append(res, toSet.Elem())
+			}
+		}
+		rst = res.Interface().([]interface{})
+		return nil
+	})
+	return rst, err
 }
 func SetValByType(ele string, of reflect.Type) (interface{}, error) {
-	eleOf := of
-	if of.Kind() == reflect.Ptr {
-		eleOf = of.Elem()
-	}
-	newV := reflect.New(eleOf)
-	switch eleOf.Kind() {
-	case reflect.Int8:
-		v, err := strconv.ParseInt(ele, 10, 8)
-		if err != nil {
-			return nil, err
+	var rst interface{}
+	err := common.PanicReportDecorator(func() error {
+		eleOf := of
+		if of.Kind() == reflect.Ptr {
+			eleOf = of.Elem()
 		}
-		newV.Elem().SetInt(v)
-	case reflect.Int16:
-		v, err := strconv.ParseInt(ele, 10, 16)
-		if err != nil {
-			return nil, err
+		newV := reflect.New(eleOf)
+		switch eleOf.Kind() {
+		case reflect.Int8:
+			v, err := strconv.ParseInt(ele, 10, 8)
+			if err != nil {
+				return err
+			}
+			newV.Elem().SetInt(v)
+		case reflect.Int16:
+			v, err := strconv.ParseInt(ele, 10, 16)
+			if err != nil {
+				return err
+			}
+			newV.Elem().SetInt(v)
+		case reflect.Int32:
+			v, err := strconv.ParseInt(ele, 10, 32)
+			if err != nil {
+				return err
+			}
+			newV.Elem().SetInt(v)
+		case reflect.Int64, reflect.Int:
+			v, err := strconv.ParseInt(ele, 10, 64)
+			if err != nil {
+				return err
+			}
+			newV.Elem().SetInt(v)
+		case reflect.Uint8:
+			v, err := strconv.ParseUint(ele, 10, 8)
+			if err != nil {
+				return err
+			}
+			newV.Elem().SetUint(v)
+		case reflect.Uint16:
+			v, err := strconv.ParseUint(ele, 10, 16)
+			if err != nil {
+				return err
+			}
+			newV.Elem().SetUint(v)
+		case reflect.Uint32:
+			v, err := strconv.ParseUint(ele, 10, 32)
+			if err != nil {
+				return err
+			}
+			newV.Elem().SetUint(v)
+		case reflect.Uint64, reflect.Uint:
+			v, err := strconv.ParseUint(ele, 10, 64)
+			if err != nil {
+				return err
+			}
+			newV.Elem().SetUint(v)
+		case reflect.Float64:
+			v, err := strconv.ParseFloat(ele, 64)
+			if err != nil {
+				return err
+			}
+			newV.Elem().SetFloat(v)
+		case reflect.Float32:
+			v, err := strconv.ParseFloat(ele, 32)
+			if err != nil {
+				return err
+			}
+			newV.Elem().SetFloat(v)
+		case reflect.String:
+			newV.Elem().SetString(ele)
+		case reflect.Bool:
+			v, err := strconv.ParseBool(ele)
+			if err != nil {
+				return err
+			}
+			newV.Elem().SetBool(v)
+		default:
+			return errors.New("SetValByType: unsupport type " + of.String())
 		}
-		newV.Elem().SetInt(v)
-	case reflect.Int32:
-		v, err := strconv.ParseInt(ele, 10, 32)
-		if err != nil {
-			return nil, err
+		//普通类型
+		if of.Kind() != reflect.Ptr {
+			rst=newV.Elem().Interface()
+			return nil
 		}
-		newV.Elem().SetInt(v)
-	case reflect.Int64, reflect.Int:
-		v, err := strconv.ParseInt(ele, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		newV.Elem().SetInt(v)
-	case reflect.Uint8:
-		v, err := strconv.ParseUint(ele, 10, 8)
-		if err != nil {
-			return nil, err
-		}
-		newV.Elem().SetUint(v)
-	case reflect.Uint16:
-		v, err := strconv.ParseUint(ele, 10, 16)
-		if err != nil {
-			return nil, err
-		}
-		newV.Elem().SetUint(v)
-	case reflect.Uint32:
-		v, err := strconv.ParseUint(ele, 10, 32)
-		if err != nil {
-			return nil, err
-		}
-		newV.Elem().SetUint(v)
-	case reflect.Uint64, reflect.Uint:
-		v, err := strconv.ParseUint(ele, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		newV.Elem().SetUint(v)
-	case reflect.Float64:
-		v, err := strconv.ParseFloat(ele, 64)
-		if err != nil {
-			return nil, err
-		}
-		newV.Elem().SetFloat(v)
-	case reflect.Float32:
-		v, err := strconv.ParseFloat(ele, 32)
-		if err != nil {
-			return nil, err
-		}
-		newV.Elem().SetFloat(v)
-	case reflect.String:
-		newV.Elem().SetString(ele)
-	case reflect.Bool:
-		v, err := strconv.ParseBool(ele)
-		if err != nil {
-			return nil, err
-		}
-		newV.Elem().SetBool(v)
-	default:
-		return nil, errors.New("SetValByType: unsupport type " + of.String())
-	}
-	//普通类型
-	if of.Kind() != reflect.Ptr {
-		return newV.Elem().Interface(), nil
-	}
-	//指针
-	return newV.Interface(), nil
+		//指针
+		rst = newV.Interface()
+		return nil
+	})
+	return rst, err
+
 }

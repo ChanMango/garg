@@ -10,28 +10,25 @@ import (
 )
 
 type RuleParser struct {
-	ActualValue interface{}
-	//ExpectValue interface{}
 	Rule string
 }
 
 //只能通过该方法初始化
-func NewParser(value reflect.Value, rule string) *RuleParser {
+func NewParser(rule string) *RuleParser {
 	return &RuleParser{
-		ActualValue: value,
-		Rule:        rule,
+		Rule: rule,
 	}
 }
 
 //一期只实现了一个层级的计算 如 >10 and < 100 或者 >10 或者required
-func (p *RuleParser) Parse() (Express, error) {
+func (p *RuleParser) Parse(expectType reflect.Type) (Express, error) {
 	//rule规则是否合理
 	legal, err := VerifyRuleIsLegal(p.Rule)
 	if !legal {
 		return nil, err
 	}
 	//检查rule中的数据类型和actual是否一致
-	express, err := internalParse(p.Rule, reflect.TypeOf(p.ActualValue))
+	express, err := internalParse(p.Rule, expectType)
 	if err != nil {
 		return nil, err
 	}
@@ -103,9 +100,14 @@ func internalParse(rule string, of reflect.Type) (Express, error) {
 		opStr := ncp.FindString(rule)
 		operateType := String2OperateType(opStr)
 		expression.Op = operateType
-		expression.expected = strings.TrimSpace(ncp.ReplaceAllString(rule, ""))
+		valByType, err := check.SetValByType(strings.TrimSpace(ncp.ReplaceAllString(rule, "")), of)
+		if err != nil {
+			return nil, err
+		}
+		expression.expected = valByType
 		return expression, nil
 	}
+	//required 表达式
 	rcp, _ := regexp.Compile(string(Required_OP_Match))
 	hasNeed := rcp.MatchString(rule)
 	if hasNeed {

@@ -84,7 +84,8 @@ func (resover defaultResolver) verify() (bool, Result) {
 	}
 	for _, field := range describe.needVerifyTagField {
 		tags := describe.fieldTagMap[field].Get(common.VERIFY_LABEL)
-		express, err := rule.NewParser(resover.TargetV, tags).Parse()
+		fieldType:=describe.fieldTypeMap[field]
+		express, err := rule.NewParser(tags).Parse(fieldType)
 		if err != nil {
 			resover.ErrResult.Add(resover.StructName, field, err)
 			pass = false

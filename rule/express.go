@@ -282,19 +282,19 @@ func (n NormalExpression) Cal(actual interface{}) (pass bool, err error) {
 	case LE_OperatorType:
 		return check.LE(actual, n.expected)
 	case GE_OperatorType:
-		return check.LE(actual, n.expected)
+		return check.GE(actual, n.expected)
 	case NE_OperatorType:
-		return check.E(actual, n.expected)
+		return check.NE(actual, n.expected)
 	case EQ_OperatorType:
-		return check.LE(actual, n.expected)
+		return check.E(actual, n.expected)
 	case LT_OperatorType:
-		return check.LE(actual, n.expected)
+		return check.LT(actual, n.expected)
 	case GT_OperatorType:
-		return check.LE(actual, n.expected)
+		return check.GT(actual, n.expected)
 	case IN_OperatorType:
 		return check.Contains(actual, n.expected)
 	case NI_OperatorType:
-		return check.Contains(actual, n.expected)
+		return check.NotContains(actual, n.expected)
 	case NEED_OperatorType:
 		return check.Required(actual)
 	default:

@@ -408,9 +408,8 @@ func compareTwoValues(e1 interface{}, e2 interface{}, allowedComparesResults []C
 	}
 
 	if !containsValue(allowedComparesResults, compareResul) {
-		return false, errors.New("")
+		return false, errors.New(fmt.Sprintf("expect [%v] should %v actual[%v], but it's not satisfied", e1, allowedComparesResults, e2))
 	}
-
 	return true, nil
 }
 

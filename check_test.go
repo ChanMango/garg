@@ -73,10 +73,8 @@ func toChange(tmp []Student) {
 
 func TestIsPointer(t *testing.T) {
 	x := NewStudent("yeung", 20, false)
-	err := check.IsPtrVal(x)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	pass := check.IsPtrVal(x)
+	fmt.Println(pass)
 }
 
 func TestCheckRule(t *testing.T) {
