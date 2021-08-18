@@ -103,3 +103,74 @@ func TestCheckRule(t *testing.T) {
 	fmt.Println(pass, result)
 	fmt.Printf("耗时=%vms \n", float32(end-start)/float32(time.Millisecond))
 }
+
+func TestCheckByMap(t *testing.T) {
+	var data = struct {
+		Id          uint64    `json:"id" db:"id"`
+		TaskId      uint64    `json:"task_id" db:"task_id"`
+		CityId      uint64    `json:"city_id" db:"city_id" arg:"in (52140500,81270100)"`
+		Phone       string    `json:"phone" db:"phone" arg:"required"`
+		CountryCode string    `json:"country_code" db:"country_code"`
+		QueryWord   string    `json:"query_word" db:"query_word"`
+		Lat         float64   `json:"lat" db:"lat" arg:">=-90 and <=90"`
+		Lng         float64   `json:"lng" db:"lng" arg:">=-180 and <=180"`
+		CreateTime  time.Time `json:"create_time" db:"create_time"`
+		Comment     string    `json:"comment" db:"comment"`
+	}{}
+
+	data.Lat = 13.4
+	data.Lng = 32.33444
+	data.Phone = "12344345"
+	data.CountryCode = "MX"
+	data.Comment = "some new"
+	data.QueryWord = "kfc"
+	data.CityId = 52140500
+	start := time.Now().Nanosecond()
+	ruleMap := make(map[string]string)
+	ruleMap["CityId"] = "in (52140500,81270100)"
+	ruleMap["Comment"] = "required"
+	pass, result := CheckByMap(data, ruleMap)
+	end := time.Now().Nanosecond()
+	fmt.Println(pass, result)
+	fmt.Printf("耗时=%vms \n", float32(end-start)/float32(time.Millisecond))
+}
+
+func Benchmark(b *testing.B) {
+	b.N = 100
+	var data = struct {
+		Id          uint64    `json:"id" db:"id"`
+		TaskId      uint64    `json:"task_id" db:"task_id"`
+		CityId      uint64    `json:"city_id" db:"city_id" arg:"in (52140500,81270100)"`
+		Phone       string    `json:"phone" db:"phone" arg:"required"`
+		CountryCode string    `json:"country_code" db:"country_code"`
+		QueryWord   string    `json:"query_word" db:"query_word"`
+		Lat         float64   `json:"lat" db:"lat" arg:">=-90 and <=90"`
+		Lng         float64   `json:"lng" db:"lng" arg:">=-180 and <=180"`
+		CreateTime  time.Time `json:"create_time" db:"create_time"`
+		Comment     string    `json:"comment" db:"comment"`
+	}{}
+
+	data.Lat = 13.4
+	data.Lng = 32.33444
+	data.Phone = "12344345"
+	data.CountryCode = "MX"
+	data.Comment = "some new"
+	data.QueryWord = "kfc"
+	data.CityId = 52140500
+	ruleMap := make(map[string]string)
+	ruleMap["CityId"] = "in (52140500,81270100)"
+	ruleMap["Comment"] = "required"
+	ruleMap["Phone"] = "required"
+	ruleMap["Lat"] = ">=-90 and <=90"
+	ruleMap["Lng"] = ">=-180 and <=180"
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		b.Run("", func(b *testing.B) {
+			//CheckByTag(data)
+			CheckByMap(&data, ruleMap)
+		})
+	}
+	b.StopTimer()
+	b.ReportAllocs()
+}

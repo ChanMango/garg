@@ -110,7 +110,7 @@ func GE(obtain, expect interface{}) (bool, error) {
 			newExp = setType
 		}
 	}
-	pass, err := compareTwoValues(obtain, newExp, []CompareType{compareGreater,compareEqual})
+	pass, err := compareTwoValues(obtain, newExp, []CompareType{compareGreater, compareEqual})
 	return pass, err
 }
 func LE(obtain, expect interface{}) (bool, error) {
@@ -126,7 +126,7 @@ func LE(obtain, expect interface{}) (bool, error) {
 		}
 
 	}
-	pass, err := compareTwoValues(obtain, newExp, []CompareType{compareLess,compareEqual})
+	pass, err := compareTwoValues(obtain, newExp, []CompareType{compareLess, compareEqual})
 	return pass, err
 }
 func GT(obtain, expect interface{}) (bool, error) {
@@ -197,8 +197,8 @@ func NE(obtain, expect interface{}) (bool, error) {
 }
 
 //是否是初始化值，或者默认零值
-func Required(obtain interface{}) (bool, error) {
-	var err error
+func Required(obtain interface{}) (isZero bool, err error) {
+
 	defer func() {
 		x := recover()
 		if x != nil {
@@ -206,7 +206,10 @@ func Required(obtain interface{}) (bool, error) {
 		}
 	}()
 	_, val := TypeAndValue(obtain)
-	isZero := val.IsZero()
+	isZero = val.IsZero()
+	if isZero {
+		return false, errors.New(fmt.Sprintf("required not zero value, but actual=%v", obtain))
+	}
 	return !isZero, err
 }
 
@@ -463,7 +466,7 @@ func SetValByType(ele string, of reflect.Type) (interface{}, error) {
 		}
 		//普通类型
 		if of.Kind() != reflect.Ptr {
-			rst=newV.Elem().Interface()
+			rst = newV.Elem().Interface()
 			return nil
 		}
 		//指针

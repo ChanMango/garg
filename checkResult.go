@@ -33,6 +33,10 @@ func (r Result) Add(structureName, msg string, err error) {
 	r[structureName][msg] = err.Error()
 }
 func (r Result) CollectToError() error {
+	//没有异常内容就返回空
+	if len(r) < 1 {
+		return nil
+	}
 	buffer := &bytes.Buffer{}
 	encoder := json.NewEncoder(buffer)
 	encoder.SetEscapeHTML(false)

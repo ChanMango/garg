@@ -24,7 +24,11 @@ func CheckByTag(vals ...interface{}) (bool, error) {
 			r.Add("nil", "arg_type_err", errors.New(fmt.Sprintf("type of arg index %v shou be struct", i)))
 			continue
 		}
-		pass, result := NewDefaultResolver(vals[i]).verify()
+		resolver, err := NewDefaultResolver(vals[i])
+		if err != nil {
+			r.AddAll(err)
+		}
+		pass, result := resolver.verifyByTagRule()
 		if !pass {
 			r.AddAll(result)
 		}
@@ -37,10 +41,12 @@ func CheckByTag(vals ...interface{}) (bool, error) {
 }
 
 //根据map里边制定字段对应的rule， 进行stuct 字段的参数校验
-func CheckByMap(val interface{}, ruleMap map[string]interface{}) (bool, Result) {
-
-	return false, nil
-
+func CheckByMap(val interface{}, ruleMap map[string]string) (bool, error) {
+	resolver, result := NewDefaultResolver(val)
+	if result != nil {
+		return false, result.CollectToError()
+	}
+	return resolver.verifyByMapRule(ruleMap)
 }
 
 //使用自定义校验规则，校验val内容
